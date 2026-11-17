@@ -70,10 +70,11 @@ def op_xor(img, p, img2=None):
     return cv2.bitwise_xor(img, citra_kedua(img, img2, p)), "Boolean XOR"
 
 # ---------------- Geometrics ----------------
-@daftar("Translation", param=(-200, 200, 50), label="Pergeseran tx (ty = tx/2)", histogram=False)
-def translation(img, p, img2=None):
+@daftar("Translation", param=(-200, 200, 50), label="Pergeseran sumbu X (tx)", histogram=False,
+        param2=(-200, 200, 25), label2="Pergeseran sumbu Y (ty)")
+def translation(img, p, img2=None, p2=0):
     H, W, _ = img.shape
-    tx, ty = float(p), float(int(p / 2))
+    tx, ty = float(p), float(p2)
     M = np.float32([[1, 0, tx], [0, 1, ty]])
     hasil = cv2.warpAffine(img, M, (W, H))
     return hasil, f"Geometrics: Translation (tx={int(tx)}, ty={int(ty)})"
