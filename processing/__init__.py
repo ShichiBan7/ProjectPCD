@@ -4,12 +4,15 @@ import cv2
 OPERASI = {}
 
 
-def daftar(nama, dua_citra=False, param=None, label="Parameter", histogram=False):
+def daftar(nama, dua_citra=False, param=None, label="Parameter", histogram=False,
+           param2=None, label2="Parameter 2"):
     """Mendaftarkan sebuah fungsi sebagai operasi.
 
     param = None                  -> operasi tanpa parameter (slider disembunyikan)
     param = (minimum, maks, awal) -> rentang dan nilai awal slider
     histogram = True              -> tombol Histogram ditampilkan untuk operasi ini
+    param2 = (minimum, maks, awal) -> slider kedua (independen); nilainya dikirim sebagai
+                                      argumen p2 ke fungsi operasi
     """
     def pembungkus(fungsi):
         OPERASI[nama] = {
@@ -18,6 +21,8 @@ def daftar(nama, dua_citra=False, param=None, label="Parameter", histogram=False
             "param": param,
             "label": label,
             "histogram": histogram,
+            "param2": param2,
+            "label2": label2,
         }
         return fungsi
     return pembungkus
