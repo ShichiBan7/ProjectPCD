@@ -69,7 +69,6 @@ def op_or(img, p, img2=None):
 def op_xor(img, p, img2=None):
     return cv2.bitwise_xor(img, citra_kedua(img, img2, p)), "Boolean XOR"
 
-
 # ---------------- Geometrics ----------------
 @daftar("Translation", param=(-200, 200, 50), label="Pergeseran tx (ty = tx/2)", histogram=False)
 def translation(img, p, img2=None):
