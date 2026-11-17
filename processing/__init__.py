@@ -1,9 +1,7 @@
 import numpy as np
 import cv2
 
-OPERASI = {}
-
-
+OPERASI = {} 
 def daftar(nama, dua_citra=False, param=None, label="Parameter", histogram=False,
            param2=None, label2="Parameter 2"):
     """Mendaftarkan sebuah fungsi sebagai operasi.
@@ -27,7 +25,6 @@ def daftar(nama, dua_citra=False, param=None, label="Parameter", histogram=False
         return fungsi
     return pembungkus
 
-
 def citra_kedua(img, img2, p):
     """Citra kedua disesuaikan ukurannya; jika kosong, dipakai matriks bernilai |p|."""
     h, w, c = img.shape
@@ -36,10 +33,11 @@ def citra_kedua(img, img2, p):
     val_u8 = int(np.clip(abs(p), 0, 255))
     return np.full((h, w, c), val_u8, dtype=np.uint8)
 
-
-def jalankan(nama, img, p, img2=None):
-    return OPERASI[nama]["fungsi"](img, p, img2)
-
-
+def jalankan(nama, img, p, img2=None, p2=None):
+    info = OPERASI[nama]
+    if info["param2"] is not None:
+        return info["fungsi"](img, p, img2, p2)
+    return info["fungsi"](img, p, img2)
+           
 # Impor modul di bawah ini agar semua operasi otomatis terdaftar.
 from . import basic_ops, colouring, enhancement, noise, edge_detection  # noqa: E402,F401
