@@ -80,8 +80,8 @@ graph TD
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/USERNAME/NAMA-REPO.git
-cd NAMA-REPO
+git clone https://github.com/ShichiBan7/ProjectPCD
+cd ProjectPCD
 
 # 2. (Opsional) buat virtual environment
 python -m venv .venv
@@ -135,19 +135,6 @@ pillow
     ├── histogram_view.py   # Tampilan histogram
     ├── histogram_window.py # Jendela histogram
     └── about_view.py       # Halaman info tim
-```
-
-### Menambah Operasi Baru
-
-Setiap operasi didaftarkan lewat decorator `daftar` di `processing/__init__.py`, lalu ditambahkan ke `menu_structure.py` agar muncul di menu:
-
-```python
-from . import daftar
-
-@daftar("Nama Operasi", param=(0, 255, 128), label="Nilai")
-def nama_operasi(img, p, img2=None):
-    # img : citra masukan (numpy array), p : nilai parameter
-    return hasil
 ```
 
 ## Tim Pengembang
