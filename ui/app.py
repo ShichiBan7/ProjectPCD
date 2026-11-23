@@ -35,6 +35,7 @@ class ImageProcessingApp:
         self.tk_asli = self.tk_kedua = self.tk_hasil = None
         self.path_simpan = None
         self.param_min, self.param_max = 0, 255
+        self.param2_min, self.param2_max = 0, 255
         self.ket_hasil = None
         self.riwayat = Riwayat(20)
         self.entri_edit = {}
@@ -141,6 +142,7 @@ class ImageProcessingApp:
     # ---------------- Parameter ----------------
     def atur_parameter(self, info):
         """Menyesuaikan slider dengan rentang milik operasi yang dipilih."""
+        self.atur_parameter2(info)
         if info["param"] is None:
             self.lbl_param.config(text="Parameter: (tidak diperlukan)")
             self.ent_param.grid_remove()
@@ -154,27 +156,59 @@ class ImageProcessingApp:
         self.ent_param.grid()
         self.slider.grid()
 
+    def atur_parameter2(self, info):
+        """Menampilkan slider kedua hanya untuk operasi yang memiliki param2 (mis. Translation)."""
+        if info.get("param2") is None:
+            self.tampil_param2(False)
+            return
+        pmin, pmaks, awal = info["param2"]
+        self.param2_min, self.param2_max = pmin, pmaks
+        self.slider2.set_range(pmin, pmaks)
+        self.param2_var.set(awal)
+        self.lbl_param2.config(text=f"{info['label2']} [{pmin}..{pmaks}]:")
+        self.tampil_param2(True)
+
+    def tampil_param2(self, tampil: bool):
+        if tampil:
+            self.lbl_param2.grid()
+            self.ent_param2.grid()
+            self.slider2.grid()
+            self.holder_kontrol.config(height=130)
+        else:
+            self.lbl_param2.grid_remove()
+            self.ent_param2.grid_remove()
+            self.slider2.grid_remove()
+            self.holder_kontrol.config(height=92)
+
     def commit_param(self, event=None):
-        raw = self.param_str.get().strip()
+        self._commit(event, self.param_var, self.param_str, self.ent_param,
+                     self.param_min, self.param_max)
+
+    def commit_param2(self, event=None):
+        self._commit(event, self.param2_var, self.param2_str, self.ent_param2,
+                     self.param2_min, self.param2_max)
+
+    def _commit(self, event, var, strvar, entry, pmin, pmaks):
+        raw = strvar.get().strip()
         try:
             nilai_awal = int(float(raw))
         except ValueError:
-            nilai_awal = self.param_var.get()
+            nilai_awal = var.get()
             self.set_status("Input tidak valid, dikembalikan ke nilai sebelumnya")
 
-        nilai = max(self.param_min, min(self.param_max, nilai_awal))
-        self.param_var.set(nilai)
-        self.param_str.set(str(nilai))
+        nilai = max(pmin, min(pmaks, nilai_awal))
+        var.set(nilai)
+        strvar.set(str(nilai))
 
         # Umpan balik non-blocking di Status Bar + kilatan merah singkat jika melebihi batas
         if nilai != nilai_awal:
             self.set_status(
-                f"Nilai {nilai_awal} melebihi batas [{self.param_min}..{self.param_max}], disesuaikan ke {nilai}"
+                f"Nilai {nilai_awal} melebihi batas [{pmin}..{pmaks}], disesuaikan ke {nilai}"
             )
-            self.ent_param.config(highlightbackground="#ef4444", highlightcolor="#ef4444")
+            entry.config(highlightbackground="#ef4444", highlightcolor="#ef4444")
             self.root.after(
                 900,
-                lambda: self.ent_param.config(highlightbackground="#dcdcdc", highlightcolor=C_ACCENT)
+                lambda: entry.config(highlightbackground="#dcdcdc", highlightcolor=C_ACCENT)
             )
 
         if event is not None and event.keysym in ("Return", "KP_Enter"):
@@ -243,6 +277,7 @@ class ImageProcessingApp:
     def buat_panel_kontrol(self):
         holder = Canvas(self.workspaceView, height=92, bg=C_WIN, highlightthickness=0)
         holder.pack(fill=X, padx=26, pady=(0, 20))
+        self.holder_kontrol = holder
 
         inner = Frame(holder, bg="white")
         Label(inner, text="PANEL KONTROL PARAMETER OPERASI", bg="white", fg=C_TITLE_CARD,
@@ -269,6 +304,30 @@ class ImageProcessingApp:
 
         self.slider = FlatSlider(inner, 0, 255, self.param_var)
         self.slider.grid(row=1, column=2, sticky="ew", padx=8)
+
+        # Slider kedua (independen), hanya tampil pada operasi yang membutuhkannya
+        self.lbl_param2 = Label(inner, text="Parameter 2:", bg="white", fg=C_TEXT,
+                                font=(FONT, 8, "bold"))
+        self.lbl_param2.grid(row=2, column=0, sticky="w", pady=(6, 0))
+
+        self.param2_var = IntVar(value=0)
+        self.param2_str = StringVar(value=str(self.param2_var.get()))
+        self.param2_var.trace_add("write", lambda *a: self.param2_str.set(str(self.param2_var.get())))
+        self.ent_param2 = Entry(inner, textvariable=self.param2_str, width=5, justify=CENTER,
+                                bg="white", fg=C_ACCENT, relief=FLAT, font=(FONT, 8, "bold"),
+                                insertbackground=C_ACCENT, highlightthickness=1,
+                                highlightbackground="#dcdcdc", highlightcolor=C_ACCENT,
+                                cursor="xterm")
+        self.ent_param2.grid(row=2, column=1, sticky="w", padx=(4, 4), pady=(6, 0))
+        self.ent_param2.bind("<Return>", self.commit_param2)
+        self.ent_param2.bind("<KP_Enter>", self.commit_param2)
+        self.ent_param2.bind("<FocusOut>", self.commit_param2)
+        self.ent_param2.bind(
+            "<FocusIn>", lambda e: self.ent_param2.after_idle(lambda: self.ent_param2.select_range(0, END)))
+
+        self.slider2 = FlatSlider(inner, 0, 255, self.param2_var)
+        self.slider2.grid(row=2, column=2, sticky="ew", padx=8, pady=(6, 0))
+        self.tampil_param2(False)
 
         btns = Frame(inner, bg="white")
         btns.grid(row=1, column=3, sticky="e")
@@ -472,7 +531,8 @@ class ImageProcessingApp:
         """Menjalankan operasi aktif (tanpa mencatat riwayat)."""
         img = np.array(self.img_asli, dtype=np.uint8)
         img2 = np.array(self.img_kedua, dtype=np.uint8) if self.img_kedua is not None else None
-        hasil, ket = jalankan(self.operasi_aktif, img, self.param_var.get(), img2)
+        hasil, ket = jalankan(self.operasi_aktif, img, self.param_var.get(), img2,
+                              self.param2_var.get())
 
         self.img_hasil = Image.fromarray(hasil)
         self.ket_hasil = ket
@@ -493,6 +553,7 @@ class ImageProcessingApp:
         self.lbl_param.config(text="Parameter:")
         self.ent_param.grid()
         self.slider.grid()
+        self.tampil_param2(False)
         self.update_indikator_operasi(TEKS_BELUM, aktif=False)
         self.atur_mode_dua_citra(False)
         self.atur_tombol_histogram(False)
@@ -512,6 +573,7 @@ class ImageProcessingApp:
     def _ambil_state(self):
         return {"asli": self.img_asli, "kedua": self.img_kedua, "hasil": self.img_hasil,
                 "operasi": self.operasi_aktif, "param": self.param_var.get(),
+                "param2": self.param2_var.get(),
                 "ket": self.ket_hasil, "path": self.path_simpan}
 
     def catat_riwayat(self):
@@ -548,6 +610,7 @@ class ImageProcessingApp:
             self.atur_parameter(info)
             self.atur_tombol_histogram(info.get("histogram", False))
             self.param_var.set(s["param"])
+            self.param2_var.set(s.get("param2", 0))
             teks = self.ket_hasil if (self.img_hasil is not None and self.ket_hasil) else self.operasi_aktif
             self.update_indikator_operasi(f"OPERASI AKTIF: {teks.upper()}", aktif=True)
         else:
@@ -557,6 +620,7 @@ class ImageProcessingApp:
             self.lbl_param.config(text="Parameter:")
             self.ent_param.grid()
             self.slider.grid()
+            self.tampil_param2(False)
             self.update_indikator_operasi(TEKS_BELUM, aktif=False)
 
         if self.img_asli is not None:
